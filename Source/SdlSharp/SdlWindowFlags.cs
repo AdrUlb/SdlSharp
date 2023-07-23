@@ -1,5 +1,6 @@
 ﻿namespace SdlSharp;
 
+[Flags]
 public enum SdlWindowFlags : uint
 {
 	OpenGl = 0x00000002,
