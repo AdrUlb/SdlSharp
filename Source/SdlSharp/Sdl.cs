@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 
 namespace SdlSharp;
 
-public static class Sdl
+public class Sdl
 {
 	private delegate nint ProcGetError();
 	private delegate SdlErrorCode ProcInit(SdlInitFlags flags);
@@ -14,7 +14,10 @@ public static class Sdl
 	private delegate void ProcShowWindow(SdlWindowPtr window);
 	private delegate void ProcHideWindow(SdlWindowPtr window);
 	private delegate SdlWindowFlags ProcGetWindowFlags(SdlWindowPtr window);
-	[return: MarshalAs(UnmanagedType.I1)] private delegate bool ProcPollEvent(out SdlEvent @event);
+
+	[return: MarshalAs(UnmanagedType.I1)]
+	private delegate bool ProcPollEvent(out SdlEvent @event);
+
 	private delegate uint ProcGetWindowID(SdlWindowPtr window);
 	private delegate void ProcGetWindowSize(SdlWindowPtr window, out int w, out int h);
 	private delegate void ProcSetWindowSize(SdlWindowPtr window, int w, int h);
@@ -25,30 +28,36 @@ public static class Sdl
 	private delegate nint ProcGL_GetProcAddress([MarshalAs(UnmanagedType.LPUTF8Str)] string proc);
 	private delegate void ProcGL_GetDrawableSize(SdlWindowPtr window, out int w, out int h);
 
-	private static readonly ProcGetError procGetError;
-	private static readonly ProcInit procInit;
-	private static readonly ProcQuit procQuit;
-	private static readonly ProcCreateWindow procCreateWindow;
-	private static readonly ProcDestroyWindow procDestroyWindow;
-	private static readonly ProcShowWindow procShowWindow;
-	private static readonly ProcHideWindow procHideWindow;
-	private static readonly ProcGetWindowFlags procGetWindowFlags;
-	private static readonly ProcPollEvent procPollEvent;
-	private static readonly ProcGetWindowID procGetWindowID;
-	private static readonly ProcGetWindowSize procGetWindowSize;
-	private static readonly ProcSetWindowSize procSetWindowSize;
-	private static readonly ProcGL_SwapWindow procGL_SwapWindow;
-	private static readonly ProcGL_CreateContext procGL_CreateContext;
-	private static readonly ProcGL_DeleteContext procGL_DeleteContext;
-	private static readonly ProcGL_MakeCurrent procGL_MakeCurrent;
-	private static readonly ProcGL_GetProcAddress procGL_GetProcAddress;
-	private static readonly ProcGL_GetDrawableSize procGL_GetDrawableSize;
+	private readonly ProcGetError procGetError;
+	private readonly ProcInit procInit;
+	private readonly ProcQuit procQuit;
+	private readonly ProcCreateWindow procCreateWindow;
+	private readonly ProcDestroyWindow procDestroyWindow;
+	private readonly ProcShowWindow procShowWindow;
+	private readonly ProcHideWindow procHideWindow;
+	private readonly ProcGetWindowFlags procGetWindowFlags;
+	private readonly ProcPollEvent procPollEvent;
+	private readonly ProcGetWindowID procGetWindowID;
+	private readonly ProcGetWindowSize procGetWindowSize;
+	private readonly ProcSetWindowSize procSetWindowSize;
+	private readonly ProcGL_SwapWindow procGL_SwapWindow;
+	private readonly ProcGL_CreateContext procGL_CreateContext;
+	private readonly ProcGL_DeleteContext procGL_DeleteContext;
+	private readonly ProcGL_MakeCurrent procGL_MakeCurrent;
+	private readonly ProcGL_GetProcAddress procGL_GetProcAddress;
+	private readonly ProcGL_GetDrawableSize procGL_GetDrawableSize;
 
-	private static readonly nint handle;
+	private readonly nint handle;
 
-	static Sdl()
+	private static Sdl? instance;
+
+	private static Sdl Instance => instance ??= new();
+
+	private static string libraryPath = "SDL2";
+	
+	private Sdl()
 	{
-		if (!NativeLibrary.TryLoad("SDL2", out handle) || handle == 0)
+		if (!NativeLibrary.TryLoad(libraryPath, out handle) || handle == 0)
 			throw new("Failed to load the native SDL2 library.");
 
 		procGetError = Marshal.GetDelegateForFunctionPointer<ProcGetError>(NativeLibrary.GetExport(handle, "SDL_GetError"));
@@ -71,6 +80,8 @@ public static class Sdl
 		procGL_GetDrawableSize = Marshal.GetDelegateForFunctionPointer<ProcGL_GetDrawableSize>(NativeLibrary.GetExport(handle, "SDL_GL_GetDrawableSize"));
 	}
 
+	public static void SetLibraryPath(string name) => libraryPath = name;
+	
 	/* 
 	 * #define SDL_WINDOWPOS_UNDEFINED_MASK    0x1FFF0000u
 	 * #define SDL_WINDOWPOS_UNDEFINED_DISPLAY(X)  (SDL_WINDOWPOS_UNDEFINED_MASK|(X))
@@ -85,58 +96,59 @@ public static class Sdl
 	public static int WindowposUndefined { get; } = WindowposUndefinedDisplay(0);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static string GetError() => Marshal.PtrToStringUTF8(procGetError()) ?? throw new UnreachableException("SDL_GetError returned NULL.");
+	public static string GetError() => Marshal.PtrToStringUTF8(Instance.procGetError()) ?? throw new UnreachableException("SDL_GetError returned NULL.");
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static SdlErrorCode Init(SdlInitFlags flags) => procInit(flags);
+	public static SdlErrorCode Init(SdlInitFlags flags) => Instance.procInit(flags);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static void Quit() => procQuit();
+	public static void Quit() => Instance.procQuit();
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static SdlWindowPtr CreateWindow(string title, int x, int y, int w, int h, SdlWindowFlags flags) => procCreateWindow(title, x, y, w, h, flags);
+	public static SdlWindowPtr CreateWindow(string title, int x, int y, int w, int h, SdlWindowFlags flags) => Instance.procCreateWindow(title, x, y, w, h, flags);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static SdlWindowPtr CreateWindow(string title, int w, int h, SdlWindowFlags flags) => procCreateWindow(title, WindowposUndefined, WindowposUndefined, w, h, flags);
+	public static SdlWindowPtr CreateWindow(string title, int w, int h, SdlWindowFlags flags) =>
+		Instance.procCreateWindow(title, WindowposUndefined, WindowposUndefined, w, h, flags);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static SdlErrorCode DestroyWindow(SdlWindowPtr window) => procDestroyWindow(window);
+	public static SdlErrorCode DestroyWindow(SdlWindowPtr window) => Instance.procDestroyWindow(window);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static void ShowWindow(SdlWindowPtr window) => procShowWindow(window);
+	public static void ShowWindow(SdlWindowPtr window) => Instance.procShowWindow(window);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static void HideWindow(SdlWindowPtr window) => procHideWindow(window);
+	public static void HideWindow(SdlWindowPtr window) => Instance.procHideWindow(window);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static SdlWindowFlags GetWindowFlags(SdlWindowPtr window) => procGetWindowFlags(window);
+	public static SdlWindowFlags GetWindowFlags(SdlWindowPtr window) => Instance.procGetWindowFlags(window);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static bool PollEvent(out SdlEvent @event) => procPollEvent(out @event);
+	public static bool PollEvent(out SdlEvent @event) => Instance.procPollEvent(out @event);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static uint GetWindowID(SdlWindowPtr window) => procGetWindowID(window);
+	public static uint GetWindowID(SdlWindowPtr window) => Instance.procGetWindowID(window);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static void GL_SwapWindow(SdlWindowPtr window) => procGL_SwapWindow(window);
+	public static void GL_SwapWindow(SdlWindowPtr window) => Instance.procGL_SwapWindow(window);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static SdlGLContext GL_CreateContext(SdlWindowPtr window) => procGL_CreateContext(window);
+	public static SdlGLContext GL_CreateContext(SdlWindowPtr window) => Instance.procGL_CreateContext(window);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static void GL_DeleteContext(SdlGLContext context) => procGL_DeleteContext(context);
+	public static void GL_DeleteContext(SdlGLContext context) => Instance.procGL_DeleteContext(context);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static SdlErrorCode GL_MakeCurrent(SdlWindowPtr window, SdlGLContext context) => procGL_MakeCurrent(window, context);
+	public static SdlErrorCode GL_MakeCurrent(SdlWindowPtr window, SdlGLContext context) => Instance.procGL_MakeCurrent(window, context);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static nint GL_GetProcAddress(string proc) => procGL_GetProcAddress(proc);
+	public static nint GL_GetProcAddress(string proc) => Instance.procGL_GetProcAddress(proc);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static void GetWindowSize(SdlWindowPtr window, out int w, out int h) => procGetWindowSize(window, out w, out h);
+	public static void GetWindowSize(SdlWindowPtr window, out int w, out int h) => Instance.procGetWindowSize(window, out w, out h);
 
-	public static void GL_GetDrawableSize(SdlWindowPtr window, out int w, out int h) => procGL_GetDrawableSize(window, out w, out h);
+	public static void GL_GetDrawableSize(SdlWindowPtr window, out int w, out int h) => Instance.procGL_GetDrawableSize(window, out w, out h);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static void SetWindowSize(SdlWindowPtr window, int w, int h) => procSetWindowSize(window, w, h);
+	public static void SetWindowSize(SdlWindowPtr window, int w, int h) => Instance.procSetWindowSize(window, w, h);
 }
