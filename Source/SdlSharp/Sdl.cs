@@ -27,7 +27,8 @@ public class Sdl
 	private delegate SdlErrorCode ProcGL_MakeCurrent(SdlWindowPtr window, SdlGLContext context);
 	private delegate nint ProcGL_GetProcAddress([MarshalAs(UnmanagedType.LPUTF8Str)] string proc);
 	private delegate void ProcGL_GetDrawableSize(SdlWindowPtr window, out int w, out int h);
-
+	private delegate SdlErrorCode ProcGL_SetSwapInterval(int interval);
+	
 	private readonly ProcGetError procGetError;
 	private readonly ProcInit procInit;
 	private readonly ProcQuit procQuit;
@@ -46,7 +47,8 @@ public class Sdl
 	private readonly ProcGL_MakeCurrent procGL_MakeCurrent;
 	private readonly ProcGL_GetProcAddress procGL_GetProcAddress;
 	private readonly ProcGL_GetDrawableSize procGL_GetDrawableSize;
-
+	private readonly ProcGL_SetSwapInterval procGL_SetSwapInterval;
+	
 	private readonly nint handle;
 
 	private static Sdl? instance;
@@ -78,6 +80,7 @@ public class Sdl
 		procGL_MakeCurrent = Marshal.GetDelegateForFunctionPointer<ProcGL_MakeCurrent>(NativeLibrary.GetExport(handle, "SDL_GL_MakeCurrent"));
 		procGL_GetProcAddress = Marshal.GetDelegateForFunctionPointer<ProcGL_GetProcAddress>(NativeLibrary.GetExport(handle, "SDL_GL_GetProcAddress"));
 		procGL_GetDrawableSize = Marshal.GetDelegateForFunctionPointer<ProcGL_GetDrawableSize>(NativeLibrary.GetExport(handle, "SDL_GL_GetDrawableSize"));
+		procGL_SetSwapInterval = Marshal.GetDelegateForFunctionPointer<ProcGL_SetSwapInterval>(NativeLibrary.GetExport(handle, "SDL_GL_SetSwapInterval"));
 	}
 
 	public static void SetLibraryPath(string name) => libraryPath = name;
@@ -147,8 +150,12 @@ public class Sdl
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static void GetWindowSize(SdlWindowPtr window, out int w, out int h) => Instance.procGetWindowSize(window, out w, out h);
 
-	public static void GL_GetDrawableSize(SdlWindowPtr window, out int w, out int h) => Instance.procGL_GetDrawableSize(window, out w, out h);
-
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static void SetWindowSize(SdlWindowPtr window, int w, int h) => Instance.procSetWindowSize(window, w, h);
+	
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static void GL_GetDrawableSize(SdlWindowPtr window, out int w, out int h) => Instance.procGL_GetDrawableSize(window, out w, out h);
+	
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static SdlErrorCode GL_SetSwapInterval(int interval) => Instance.procGL_SetSwapInterval(interval);
 }
