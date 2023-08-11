@@ -23,8 +23,7 @@ public readonly struct SdlKeyboardEvent
 	public readonly uint Timestamp;		// In milliseconds, populated using SDL_GetTicks()
 	public readonly uint WindowID;		// The window with keyboard focus, if any
 	public readonly SdlKeyState State;	// ::SDL_PRESSED or ::SDL_RELEASED
-	[MarshalAs(UnmanagedType.I1)]
-	public readonly bool Repeat;			// Non-zero if this is a key repeat
+	public readonly byte Repeat;			// Non-zero if this is a key repeat
 	public readonly byte Padding2;
 	public readonly byte Padding3;
 	public readonly SdlKeysym keysym;	// The key that was pressed or released
