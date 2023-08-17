@@ -71,6 +71,8 @@ public static partial class Sdl
 	[LibraryImport(LibraryName, EntryPoint = "SDL_GL_SetSwapInterval")]
 	private static partial SdlErrorCode NativeGL_SetSwapInterval(int interval);
 
+	[LibraryImport(LibraryName, EntryPoint = "SDL_GL_SetAttribute")]
+	private static partial SdlErrorCode NativeGL_SetAttribute(SdlGlAttribute attr, int value);
 	
 	private const int WindowposUndefinedMask = (int)0x1FFF0000u;
 
@@ -139,4 +141,8 @@ public static partial class Sdl
 	
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static SdlErrorCode GL_SetSwapInterval(int interval) => NativeGL_SetSwapInterval(interval);
+
+
+	public static SdlErrorCode GL_SetAttribute(SdlGlAttribute attr, int value) => NativeGL_SetAttribute(attr, value);
+	public static SdlErrorCode GL_SetAttribute(SdlGlAttribute attr, SdlGlProfile value) => NativeGL_SetAttribute(attr, (int)value);
 }
